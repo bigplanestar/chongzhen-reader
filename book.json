@@ -7,7 +7,8 @@
   "branch": "main",
   "kdf": "PBKDF2-SHA256",
   "iterations": 600000,
-  "salt": "0tGTu2FEUs3y+EkqTFMVwA==",
+  "salt": "tFpUwXwBziyCr5b6vlcVOw==",
   "chapters": 850,
-  "built_at": "2026-10-20T01:54:14+00:00"
+  "built_at": "2026-10-20T01:54:14+00:00",
+  "password_changed_at": "2026-10-20T03:22:14+00:00"
 }
