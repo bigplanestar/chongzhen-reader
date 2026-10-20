@@ -1,2 +1,75 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>崇祯十年 · 私人书房</title><link rel="stylesheet" href="./entry.css"><script src="./entry.js" defer></script></head><body><main><div class="seal" aria-hidden="true">阅</div><p class="eyebrow">一卷风云，一章一读</p><h1>崇祯十年</h1><p class="subtitle">私人书房</p><div class="divider" aria-hidden="true">◆</div><p id="status" role="status">正在为你翻开书页…</p><a id="enter" class="button" hidden>进入书房 →</a><button id="retry" hidden>重新连接</button><p class="features">按章阅读　·　修改正文　·　审阅批准</p><p class="note">手机、平板、电脑，都从这里打开。<br>进入后使用你设置的书房密码登录。</p><small>请收藏此页面，作为书房的固定入口。</small></main></body></html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f5f2eb">
+  <title>崇祯十年 · 私人书房</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="same-origin">
+  <meta http-equiv="Content-Security-Policy" content="default-src &#39;self&#39;; script-src &#39;self&#39;; style-src &#39;self&#39; &#39;unsafe-inline&#39;; img-src &#39;self&#39; data:; connect-src &#39;self&#39; https://api.github.com https://raw.githubusercontent.com; base-uri &#39;none&#39;; form-action &#39;self&#39;">
+  <script src="./app.mjs" type="module"></script>
+</head>
+<body>
+  <div class="reading-progress" aria-hidden="true"><span id="progress-bar"></span></div>
+  <button id="scrim" class="scrim" aria-label="收起目录" hidden></button>
+  <aside id="sidebar" aria-label="章节目录">
+    <a class="brand" href="#chapter=1"><span class="seal" aria-hidden="true">阅</span><span><strong>崇祯十年</strong><small>一卷风云，一章一读</small></span></a>
+    <div class="book-stats"><span><b id="total-count">—</b> 已写章节</span><span><b id="approved-count">—</b> 已批准</span></div>
+    <label class="search-box"><span aria-hidden="true">⌕</span><input id="chapter-search" type="search" placeholder="搜索章名 / 章号" aria-label="搜索章名或章号" autocomplete="off"><kbd>/</kbd></label>
+    <div class="catalog-tools"><label class="sr-only" for="chapter-filter">章节状态</label><select id="chapter-filter"><option value="all">全部章节</option><option value="pending">待我审阅</option><option value="approved">已经批准</option><option value="draft">新稿待审</option><option value="conflict">有新稿待合并</option></select><button id="jump-current" class="text-button">定位本章</button></div>
+    <nav id="chapter-list" aria-label="按卷选章"><p class="muted empty">正在整理目录…</p></nav>
+    <footer class="sidebar-footer"><span class="live-dot"></span><span id="source-summary">正在载入书稿</span><button id="refresh" class="text-button" title="刷新章节目录">刷新</button></footer>
+  </aside>
+  <main id="main">
+    <header class="topbar"><div class="topbar-left"><button id="menu-button" class="icon-button mobile-only" aria-label="展开目录" aria-expanded="false">☰</button><span id="volume-label">私人书房</span></div><div class="topbar-actions"><button id="settings-button" class="button subtle" aria-label="阅读设置" aria-expanded="false"><span class="aa">Aa</span><span class="desktop-label">阅读设置</span></button><button id="account-button" class="button subtle">启用编辑</button></div></header>
+    <section id="settings-panel" class="settings-panel" aria-label="阅读设置" hidden>
+      <div class="panel-heading"><strong>让阅读更舒服</strong><button id="settings-close" class="icon-button" aria-label="关闭阅读设置">×</button></div>
+      <div class="setting-row"><label for="font-size">字号 <output id="font-value">21</output></label><input id="font-size" type="range" min="16" max="34" step="1" value="21"></div>
+      <div class="setting-row"><label for="line-height">行距 <output id="line-value">2.0</output></label><input id="line-height" type="range" min="1.5" max="2.8" step="0.1" value="2"></div>
+      <div class="setting-row"><label for="font-family">字体</label><select id="font-family"><option value="serif">宋体 · 书卷</option><option value="sans">黑体 · 清晰</option></select></div>
+      <fieldset class="theme-field"><legend>纸张颜色</legend><div class="theme-options"><button data-theme="paper" class="theme-swatch paper" aria-label="暖纸" title="暖纸"></button><button data-theme="white" class="theme-swatch white" aria-label="素白" title="素白"></button><button data-theme="green" class="theme-swatch green" aria-label="护眼绿" title="护眼绿"></button><button data-theme="night" class="theme-swatch night" aria-label="夜读" title="夜读"></button><label class="custom-color" title="自选背景色"><input id="custom-color" type="color" value="#f5f2eb" aria-label="自选背景颜色"><span>自选</span></label></div></fieldset>
+      <button id="reset-settings" class="text-button">恢复默认设置</button>
+    </section>
+    <div id="load-error" class="page-error" role="alert" hidden><strong id="load-error-title">书稿暂时没有载入</strong><p id="load-error-text"></p><button id="retry" class="button primary">重新载入</button></div>
+    <section id="chapter-shell" aria-label="当前章节" hidden>
+      <div class="chapter-toolbar"><div class="chapter-tags"><span id="review-badge" class="badge">待审阅</span><span id="stage-badge" class="stage-badge"></span></div><div class="chapter-actions"><button id="history-button" class="text-button">版本记录</button><a id="word-link" class="text-button" href="#">下载 Word</a><button id="edit-button" class="button compact">修改</button><button id="approve-button" class="button primary compact">批准本章</button></div></div>
+      <div id="conflict-banner" class="notice" hidden><span>这章有一份新的书稿，你的修改已保留。</span><button id="merge-button" class="text-button">查看并合并 →</button></div>
+      <article id="reading" tabindex="-1"><div class="chapter-heading"><p id="chapter-number" class="eyebrow"></p><h1 id="chapter-title"></h1><div id="chapter-meta" class="chapter-meta"></div><span class="chapter-divider" aria-hidden="true">◆</span></div><div id="chapter-content"></div><div class="chapter-end" aria-hidden="true">· &nbsp; · &nbsp; ·</div></article>
+      <div id="approval-info" class="approval-info" hidden></div>
+      <footer class="chapter-navigation"><button id="previous" class="button nav-button"><span>←</span><span>上一章</span></button><button id="to-catalog" class="text-button">章节目录</button><button id="next" class="button nav-button"><span>下一章</span><span>→</span></button></footer>
+      <p class="reading-note">阅读位置与外观设置会自动记住。修改和批准记录保存在 GitHub，可在其他设备继续审稿。</p>
+    </section>
+    <div id="loading" class="loading"><span class="loading-seal">阅</span><p>翻开书页…</p></div>
+  </main>
+  <dialog id="auth-dialog" class="small-dialog"><form id="auth-form"><div class="dialog-heading"><div><p class="eyebrow">私人书房</p><h2 id="auth-title">登录编辑</h2></div><button type="button" class="icon-button" data-close="auth-dialog" aria-label="关闭">×</button></div><p id="auth-description" class="muted"></p><label id="name-field" class="field" hidden>你的署名<input id="editor-name" maxlength="40" value="作者" autocomplete="nickname"></label><label id="password-field" class="field">书房访问密码<input id="editor-password" type="password" maxlength="200" required autocomplete="current-password"></label><label id="confirm-field" class="field" hidden>再输入一次<input id="confirm-password" type="password" maxlength="200" autocomplete="new-password"></label><p id="auth-error" class="form-error" role="alert"></p><button id="auth-submit" class="button primary full" type="submit">登录</button></form></dialog>
+  <dialog id="account-dialog" class="small-dialog"><div class="dialog-heading"><h2>我的书房</h2><button class="icon-button" data-close="account-dialog" aria-label="关闭">×</button></div><p id="account-name" class="muted"></p><button id="export-book" class="button full account-action">导出全书与版本记录</button><button id="connect-github" class="button full account-action">连接 GitHub 编辑</button><button id="change-password-button" hidden class="button full account-action">修改编辑密码</button><button id="logout-button" class="text-button full account-action">退出书房</button></dialog>
+  <dialog id="password-dialog" class="small-dialog"><form id="password-form"><div class="dialog-heading"><h2>修改编辑密码</h2><button type="button" class="icon-button" data-close="password-dialog" aria-label="关闭">×</button></div><label class="field">原密码<input id="old-password" type="password" required autocomplete="current-password"></label><label class="field">新密码<input id="new-password" type="password" minlength="8" maxlength="200" required autocomplete="new-password"></label><label class="field">再输入一次<input id="new-password-confirm" type="password" minlength="8" maxlength="200" required autocomplete="new-password"></label><p id="password-error" class="form-error" role="alert"></p><button class="button primary full" type="submit">保存新密码</button></form></dialog>
+  <dialog id="edit-dialog" class="editor-dialog"><form id="edit-form"><div class="dialog-heading"><div><p id="edit-version" class="eyebrow"></p><h2>修改这一章</h2></div><button id="edit-close" type="button" class="icon-button" aria-label="关闭编辑">×</button></div><label class="field">章节标题<input id="edit-title" maxlength="160" required></label><label class="field editor-field">正文 <span class="muted">空一行分段</span><textarea id="edit-content" spellcheck="false" required></textarea></label><label class="field">修改备注 <span class="muted">选填</span><input id="edit-note" maxlength="500" placeholder="例如：调整人物对话，补充营救细节"></label><p id="edit-error" class="form-error" role="alert"></p><div class="dialog-footer"><span id="edit-status" class="muted">每次保存都会生成新版本</span><div><button id="edit-cancel" type="button" class="button">取消</button><button id="save-button" type="submit" class="button primary">保存修改</button></div></div></form></dialog>
+  <dialog id="review-dialog" class="small-dialog"><form id="review-form"><div class="dialog-heading"><h2 id="review-title">批准这一章</h2><button type="button" class="icon-button" data-close="review-dialog" aria-label="关闭">×</button></div><p id="review-description" class="muted"></p><label class="field">审阅备注 <span class="muted">选填</span><textarea id="review-note" rows="3" maxlength="2000" placeholder="留下你对本章的意见"></textarea></label><p id="review-error" class="form-error" role="alert"></p><button id="review-submit" type="submit" class="button primary full">确认批准当前版本</button></form></dialog>
+  <dialog id="history-dialog" class="history-dialog"><div class="dialog-heading"><div><p class="eyebrow">每一次改动都有迹可循</p><h2>版本记录</h2></div><button class="icon-button" data-close="history-dialog" aria-label="关闭">×</button></div><div class="history-layout"><div id="history-list"></div><div class="history-preview"><h3 id="history-title"></h3><p id="history-meta" class="muted"></p><pre id="history-content"></pre><button id="restore-button" class="button primary" hidden>将此版本恢复为当前稿</button></div></div><div id="review-events"></div><p id="history-error" class="form-error" role="alert"></p></dialog>
+  <dialog id="merge-dialog" class="merge-dialog"><div class="dialog-heading"><div><p class="eyebrow">你的修改不会被自动覆盖</p><h2>查看同步的新稿</h2></div><button class="icon-button" data-close="merge-dialog" aria-label="关闭">×</button></div><p class="muted">对照两份文字后，你可以保留当前稿、采用新稿，或关闭这里后在“修改”中手工合并，再选择保留当前稿。</p><div class="comparison"><section><h3>网站当前稿</h3><pre id="merge-current"></pre></section><section><h3>同步的新稿</h3><pre id="merge-incoming"></pre></section></div><p id="merge-error" class="form-error" role="alert"></p><div class="dialog-footer"><span class="muted">采用新稿后，本章将重新等待批准。</span><div><button id="keep-current" class="button">保留当前稿</button><button id="adopt-incoming" class="button primary">采用新稿</button></div></div></dialog>
+
+  <dialog id="github-dialog" class="small-dialog"><form id="github-form">
+    <div class="dialog-heading"><h2>连接 GitHub 编辑</h2><button type="button" class="icon-button" data-close="github-dialog" aria-label="关闭">×</button></div>
+    <p class="muted">连接后，你的修改、批准与版本记录会保存在 GitHub，手机和电脑共用同一份书稿。</p>
+    <details class="connection-help"><summary>第一次连接：取得访问密钥</summary><ol>
+      <li>打开 <a href="https://github.com/settings/personal-access-tokens/new?name=Chongzhen-reader&amp;target_name=bigplanestar&amp;contents=write&amp;expires_in=90" target="_blank" rel="noopener noreferrer">GitHub 密钥设置</a>，登录 bigplanestar。</li>
+      <li>选择 <b>Only select repositories</b>，仅勾选 <b>chongzhen-reader</b>。</li>
+      <li>在 Repository permissions 中，将 <b>Contents</b> 设为 <b>Read and write</b>，然后生成并复制密钥。</li>
+    </ol></details>
+    <label class="field">你的署名<input id="github-name" maxlength="40" value="作者" autocomplete="nickname"></label>
+    <label class="field">GitHub 访问密钥<input id="github-token" type="password" required autocomplete="off" spellcheck="false" placeholder="github_pat_…"></label>
+    <label class="remember-connection"><input id="github-remember" type="checkbox" checked>在此设备记住连接</label>
+    <p class="muted">记住的连接会使用书房密钥加密保存在本浏览器，仍需书房密码才能打开。</p>
+    <p id="github-error" class="form-error" role="alert"></p>
+    <button id="github-submit" type="submit" class="button primary full">连接并启用编辑</button>
+  </form></dialog>
+
+  <dialog id="confirm-dialog" class="small-dialog"><h2 id="confirm-title">确认操作</h2><p id="confirm-message" class="muted"></p><div class="confirm-actions"><button id="confirm-no" class="button">返回</button><button id="confirm-yes" class="button primary">确认</button></div></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <noscript><p class="page-error">请启用浏览器 JavaScript，以使用章节阅读、修改和批准功能。</p></noscript>
+</body>
+</html>

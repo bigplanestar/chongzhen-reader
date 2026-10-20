@@ -1,0 +1,13 @@
+{
+  "format": "cz-pages-v1",
+  "book_id": "chongzhen-a404657ffb328955727490db",
+  "title": "崇祯十年",
+  "owner": "bigplanestar",
+  "repo": "chongzhen-reader",
+  "branch": "main",
+  "kdf": "PBKDF2-SHA256",
+  "iterations": 600000,
+  "salt": "0tGTu2FEUs3y+EkqTFMVwA==",
+  "chapters": 850,
+  "built_at": "2026-10-20T01:54:14+00:00"
+}
