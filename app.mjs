@@ -205,7 +205,7 @@ $('github-form').onsubmit=async event=>{
   event.preventDefault();$('github-submit').disabled=true;$('github-error').textContent='';
   try{
     await backend.connect($('github-token').value,$('github-name').value,$('github-remember').checked);
-    $('github-token').value='';await refreshSession();closeDialog('github-dialog');toast('已连接 GitHub，可以修改和批准章节');
+    $('github-token').value='';await refreshSession();await loadCatalog();if(state.current)await navigate(state.current.id,{replace:true,resume:true});closeDialog('github-dialog');toast('已连接 GitHub，可以修改和批准章节');
   }catch(error){$('github-error').textContent=error.message;}
   finally{$('github-submit').disabled=false;}
 };
@@ -222,7 +222,7 @@ const originalLogout=$('logout-button').onclick;
 $('logout-button').onclick=async()=>{
   await originalLogout();
   if(!backend.key){
-    for(const id of ['history-content','history-title','review-events','merge-current','merge-incoming'])$(id).replaceChildren();
+    for(const id of ['history-content','history-title','history-list','review-events','merge-current','merge-incoming'])$(id).replaceChildren();
     for(const id of ['edit-form','review-form','github-form'])$(id).reset();
     state.editBase=state.reviewBase=state.historyBase=state.historyRevision=state.mergeBase=null;
   }

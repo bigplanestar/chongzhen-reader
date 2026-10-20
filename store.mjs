@@ -104,14 +104,19 @@ export class PagesStore {
     const headers = {Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'};
     if (token) headers.Authorization = 'Bearer ' + token;
     if (body !== undefined) headers['Content-Type'] = 'application/json';
-    return this.json(API + path, {method, headers, ...(body === undefined ? {} : {body: JSON.stringify(body)})});
+    // Public branch-ref responses can otherwise stay cached after a successful write.
+    const suffix = method === 'GET' ? (path.includes('?') ? '&' : '?') + '_reader=' + Date.now() + '-' + Math.random().toString(16).slice(2) : '';
+    return this.json(API + path + suffix, {method, headers, ...(body === undefined ? {} : {body: JSON.stringify(body)})});
   }
 
   repo(path) { return '/repos/' + OWNER + '/' + REPO + path; }
 
   async file(path, revision = this.revision) {
     if (!/^data\/(catalog\.json|chapters\/\d{4}\.json)$/.test(path)) throw problem('无效的书稿路径。');
-    if (revision) return this.json('https://raw.githubusercontent.com/' + OWNER + '/' + REPO + '/' + revision + '/' + path);
+    if (revision) {
+      try { return await this.json('https://raw.githubusercontent.com/' + OWNER + '/' + REPO + '/' + revision + '/' + path); }
+      catch { return this.currentFile(path, revision); }
+    }
     return this.json(new URL(path, this.base));
   }
 
@@ -166,12 +171,15 @@ export class PagesStore {
     if (validateWrite) await this.github('POST', this.repo('/git/blobs'),
       {content: 'Reading room write permission check', encoding: 'utf-8'}, token);
     const editorName = String(name || user.name || user.login).trim().slice(0, 40);
+    const previousToken = this.token, previousName = this.name;
+    this.token = token; this.name = editorName;
+    try { await this.refresh(); }
+    catch (error) { this.token = previousToken; this.name = previousName; throw error; }
     if (remember) {
       const box = await seal(this.key, {token, name: editorName}, this.context('github-credential'));
       try { this.storage?.setItem(this.credentialKey(), JSON.stringify(box)); }
       catch { throw problem('浏览器无法保存连接，请取消“在此设备记住连接”后重试。'); }
     }
-    this.token = token; this.name = editorName;
   }
 
   lock() {
@@ -192,8 +200,8 @@ export class PagesStore {
   }
 
   async currentFile(path, revision) {
-    return this.json(API + this.repo('/contents/' + path) + '?ref=' + encodeURIComponent(revision), {
-      headers: {Accept: 'application/vnd.github.raw+json', Authorization: 'Bearer ' + this.token,
+    return this.json(API + this.repo('/contents/' + path) + '?ref=' + encodeURIComponent(revision) + '&_reader=' + Date.now(), {
+      headers: {Accept: 'application/vnd.github.raw+json', ...(this.token ? {Authorization: 'Bearer ' + this.token} : {}),
         'X-GitHub-Api-Version': '2022-11-28'}});
   }
 
@@ -237,6 +245,12 @@ export class PagesStore {
       const catalog = await unseal(this.key, box, this.context('catalog'));
       this.revision = head.object.sha; this.catalog = catalog; this.catalogBox = box; this.cache.clear();
     } catch (error) {
+      if (!this.token) {
+        const box = await this.json(new URL('data/catalog.json?t=' + Date.now(), this.base));
+        const catalog = await unseal(this.key, box, this.context('catalog'));
+        this.revision = null; this.catalog = catalog; this.catalogBox = box; this.cache.clear();
+        return;
+      }
       // A failed refresh is reported rather than claiming an old catalog is up to date.
       throw problem('暂时未能取得 GitHub 上的最新书稿。当前已打开的文字仍可阅读。', error.status || 503);
     }
